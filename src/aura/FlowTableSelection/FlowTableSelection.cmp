@@ -1,0 +1,76 @@
+<aura:component controller="FlowTableSelectionController" access="global" implements="lightning:availableForFlowScreens">
+	<aura:attribute name="FieldLabels" type="List"/>
+	<aura:attribute name="TableRows" type="List"/>
+	<aura:attribute name="ObjectAPIName" type="String"/>
+	<aura:attribute name="WhereClause" type="String"/>
+	<aura:attribute name="FieldSetName" type="String"/>
+	<aura:attribute name="SelectedRecordId" type="String"/>
+	<aura:attribute name="AllowSelection" type="Boolean"/>
+	<aura:attribute name="NoRecords" type="Boolean" default="true"/>
+	<aura:attribute name="NoRecordsMessage" type="String"/>
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+	<aura:renderIf isTrue="{!not(v.NoRecords)}">
+		<table class="slds-table slds-table_bordered slds-table_striped slds-table_fixed-layout" style="border: 1px solid rgb(217, 219, 221);">
+			<thead>
+				<tr class="slds-text-title_caps">
+					<aura:iteration items="{!v.FieldLabels}" var="field_label" >
+						<th>
+							<div class="slds-truncate">{!field_label}</div>
+						</th>
+					</aura:iteration>
+				</tr>
+			</thead>
+			<tbody>
+				<aura:iteration items="{!v.TableRows}" var="row">
+					<tr>
+						<aura:iteration items="{!row.Fields}" var="field">
+							<td class="slds-truncate">
+								<lightning:layout >
+									<aura:renderIf isTrue="{!and(v.AllowSelection, field.FirstField)}">
+										<lightning:layoutItem class="slds-m-right_x-small">
+											<lightning:input type="radio" label="" name="SelectedRecord" value="{!row.RecordId}" variant="label-hidden" onchange="{!c.handleRadioClick}"/>
+										</lightning:layoutItem>
+									</aura:renderIf>
+									<lightning:layoutItem>
+										<aura:renderIf isTrue="{!(field.FieldType == 'BOOLEAN')}">
+											<lightning:input type="checkbox" disabled="true" label=""  value="{!field.Value}" variant="label-hidden"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'CURRENCY')}">
+											<lightning:formattedNumber value="{!field.Value}" style="currency" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'PERCENT')}">
+											<lightning:formattedNumber value="{!field.Value}" style="percent" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'DOUBLE' || field.FieldType == 'LONG' || field.FieldType == 'INTEGER')}">
+											<lightning:formattedNumber value="{!field.Value}" style="decimal" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'PHONE')}">
+											<lightning:formattedPhone value="{!field.Value}"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'DATE' || field.FieldType == 'TIME' || field.FieldType == 'DATETIME' || field.FieldType == 'STRING' || field.FieldType == 'PICKLIST' || field.FieldType == 'MULTIPICKLIST' || field.FieldType == 'ADDRESS' || field.FieldType == 'ID' || field.FieldType == 'REFERENCE' || field.FieldType == 'EMAIL')}">
+											{!field.Value}
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'TEXTAREA')}">
+											<aura:unescapedHtml value="{!field.Value}"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'URL')}">
+											<lightning:formattedUrl value="{!field.Value}" />
+										</aura:renderIf>
+									</lightning:layoutItem>
+								</lightning:layout>
+							</td>
+						</aura:iteration>
+					</tr>
+				</aura:iteration>
+			</tbody>
+		</table>
+		<aura:set attribute="else">
+			<div class="slds-align_absolute-center">
+				{!v.NoRecordsMessage}
+			</div>
+		</aura:set>
+	</aura:renderIf>
+	
+</aura:component>

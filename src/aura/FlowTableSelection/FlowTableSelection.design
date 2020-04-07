@@ -1,0 +1,8 @@
+<design:component>
+	<design:attribute name="ObjectAPIName" label="Object API Name" />
+    <design:attribute name="WhereClause" label="Where Clause" />
+    <design:attribute name="FieldSetName" label="Field Set Name" />
+    <design:attribute name="SelectedRecordId" label="Selected Record Id" />
+    <design:attribute name="AllowSelection" label="Allow Selection" />
+    <design:attribute name="NoRecordsMessage" label="No Records Message" default="There are no records to display"/>
+</design:component>
