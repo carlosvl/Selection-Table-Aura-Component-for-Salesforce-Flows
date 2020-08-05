@@ -1,11 +1,11 @@
-public class FlowTableSelectionController  {
+public class FlowTableSelectionController  { 
 	@AuraEnabled
     public static ApexMethodResult getRecordsToDisplayInTable(String sobject_name, String field_set_name, String where_clause){
         ApexMethodResult apex_method_result = new ApexMethodResult();
         try {
 			Schema.FieldSet field_set = getFieldSetForObject(sobject_name, field_set_name);
 			apex_method_result.setFieldLabels(field_set);
-			String query = getQueryForOjbectFieldSetAndWhereClause(sobject_name, field_set, where_clause);
+			String query = getQueryForObjectFieldSetAndWhereClause(sobject_name, field_set, where_clause);
 			List<sObject> table_records = Database.query(query);
 			for(sObject table_record : table_records){
 				TableRow table_row = new TableRow(table_record, field_set);
@@ -30,7 +30,7 @@ public class FlowTableSelectionController  {
 		return sobject_type_describe.FieldSets.getMap().get(field_set_name);
 	}
 
-	private static String getQueryForOjbectFieldSetAndWhereClause(String sobject_name, Schema.FieldSet field_set, String where_clause){
+	private static String getQueryForObjectFieldSetAndWhereClause(String sobject_name, Schema.FieldSet field_set, String where_clause){
 		List<String> fields_api_name = new List<String>();
 		for(Schema.FieldSetMember fieldset_member : field_set.getFields()){
 			fields_api_name.add(fieldset_member.getFieldPath());
@@ -77,9 +77,12 @@ public class FlowTableSelectionController  {
         public List<Field> Fields;
 		@AuraEnabled
         public String RecordId;
+        @AuraEnabled
+        public Boolean ValueChecked;
 		
 		public TableRow(sObject record, Schema.FieldSet field_set){
 			this.RecordId = record.Id;
+            this.ValueChecked = false;
 			this.Fields = new List<Field>();
 			for(Schema.FieldSetMember fieldset_member : field_set.getFields()){
 				Field table_row_field = new Field(record, fieldset_member, this.Fields.isEmpty());

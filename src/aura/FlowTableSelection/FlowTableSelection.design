@@ -3,6 +3,11 @@
     <design:attribute name="WhereClause" label="Where Clause" />
     <design:attribute name="FieldSetName" label="Field Set Name" />
     <design:attribute name="SelectedRecordId" label="Selected Record Id" />
-    <design:attribute name="AllowSelection" label="Allow Selection" />
+    <design:attribute name="Pagination" label="Pagination functionality" default="false"/> 
+    <design:attribute name="Searching" label="Searching functionality" default="false"/> 
+    <design:attribute name="Sorting" label="Sorting functionality" default="false"/> 
+    <design:attribute name="NoSelection" label="No Selection" default="false"/> 
+    <design:attribute name="AllowSingleSelection" label="Single Selection" default="false"/> 
+    <design:attribute name="AllowMultiSelection" label="Multiple Selection" default="false"/> 
     <design:attribute name="NoRecordsMessage" label="No Records Message" default="There are no records to display"/>
 </design:component>

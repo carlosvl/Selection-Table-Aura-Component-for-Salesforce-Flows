@@ -1,39 +1,92 @@
 <aura:component controller="FlowTableSelectionController" access="global" implements="lightning:availableForFlowScreens">
-	<aura:attribute name="FieldLabels" type="List"/>
-	<aura:attribute name="TableRows" type="List"/>
+    <aura:attribute name="FieldLabels" type="List"/>
+    <aura:attribute name="TableRows" type="List"/>
+    <aura:attribute name="PaginationRows" type="List"/>
+    <aura:attribute name="FullListRows" type="List"/>
 	<aura:attribute name="ObjectAPIName" type="String"/>
 	<aura:attribute name="WhereClause" type="String"/>
-	<aura:attribute name="FieldSetName" type="String"/>
+	<aura:attribute name="FieldSetName" type="String"/> 
 	<aura:attribute name="SelectedRecordId" type="String"/>
-	<aura:attribute name="AllowSelection" type="Boolean"/>
+    <aura:attribute name="NoSelection" type="Boolean"/>
+	<aura:attribute name="AllowSingleSelection" type="Boolean"/>
+    <aura:attribute name="AllowMultiSelection" type="Boolean"/>
 	<aura:attribute name="NoRecords" type="Boolean" default="true"/>
 	<aura:attribute name="NoRecordsMessage" type="String"/>
-	
+    <aura:attribute name="searchKey" type="String"/>
+    <aura:attribute name="IsSortAscending" type="Boolean" default="false"/>
+    <aura:attribute name="SelectedColumn" type="String"/>
+    <aura:attribute name="PageSize" type="Integer" default="5"/>
+    <aura:attribute name="TotalSize" type="Integer"/>
+    <aura:attribute name="Start" type="Integer" />
+	<aura:attribute name="End" type="Integer"/>
+    <aura:attribute name="Pagination" type="Boolean"/>
+    <aura:attribute name="Searching" type="Boolean"/>
+    <aura:attribute name="Sorting" type="Boolean"/>
 	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
 
 	<aura:renderIf isTrue="{!not(v.NoRecords)}">
+        <aura:if isTrue="{!v.Searching}" >
+            <div class="slds-clearfix" style="padding-bottom: 10px;">
+                <div class="slds-float_right">
+                    <lightning:layoutItem size="12">
+                        <lightning:input name="searchbar" label="Search Quotes" value="{!v.searchKey}" placeholder="Search..." onkeyup="{!c.searchkey}"/>
+                    </lightning:layoutItem>
+                </div>
+            </div>
+        </aura:if>
 		<table class="slds-table slds-table_bordered slds-table_striped slds-table_fixed-layout" style="border: 1px solid rgb(217, 219, 221);">
 			<thead>
-				<tr class="slds-text-title_caps">
-					<aura:iteration items="{!v.FieldLabels}" var="field_label" >
-						<th>
-							<div class="slds-truncate">{!field_label}</div>
-						</th>
-					</aura:iteration>
-				</tr>
+                <aura:if isTrue="{!v.Sorting}" >
+                    <tr class="slds-text-title_caps">
+                        <aura:iteration items="{!v.FieldLabels}" var="field_label" indexVar="i">
+                            <aura:if isTrue="{!v.SelectedColumn == field_label}">
+                                <aura:if isTrue="{!v.IsSortAscending}">
+                                    <th>
+                                        <div class="slds-truncate" data-index="{!i}" onclick="{!c.sortByFunction}">&#8593; {!field_label}</div>
+                                    </th>
+                                <aura:set attribute="else">
+                                	<th>
+                                        <div class="slds-truncate" data-index="{!i}" onclick="{!c.sortByFunction}">&#8595; {!field_label}</div>
+                                    </th>
+                            	</aura:set>
+                                </aura:if>
+                            <aura:set attribute="else">
+                                <th>
+                                    <div class="slds-truncate" data-index="{!i}" onclick="{!c.sortByFunction}">{!field_label}</div>
+                                </th>
+                            </aura:set>
+                            </aura:if>
+                        </aura:iteration> 
+                    </tr>
+                    <aura:set attribute="else">
+                    	<tr class="slds-text-title_caps">
+                        	<aura:iteration items="{!v.FieldLabels}" var="field_label">
+                            	<th>
+                                	<div class="slds-truncate" >{!field_label}</div>
+                            	</th>
+                        	</aura:iteration> 
+                    	</tr>
+					</aura:set>
+                </aura:if>
 			</thead>
 			<tbody>
-				<aura:iteration items="{!v.TableRows}" var="row">
+                <aura:if isTrue="{!v.Pagination}" >
+				<aura:iteration items="{!v.PaginationRows}" var="row">
 					<tr>
 						<aura:iteration items="{!row.Fields}" var="field">
 							<td class="slds-truncate">
 								<lightning:layout >
-									<aura:renderIf isTrue="{!and(v.AllowSelection, field.FirstField)}">
+									<aura:renderIf isTrue="{!and(v.AllowSingleSelection, field.FirstField)}">
 										<lightning:layoutItem class="slds-m-right_x-small">
 											<lightning:input type="radio" label="" name="SelectedRecord" value="{!row.RecordId}" variant="label-hidden" onchange="{!c.handleRadioClick}"/>
 										</lightning:layoutItem>
+									</aura:renderIf> 
+                                    <aura:renderIf isTrue="{!and(v.AllowMultiSelection, field.FirstField)}">
+                                        <lightning:layoutItem class="slds-m-right_x-small">
+                                            <lightning:input type="checkbox" label="" name="SelectedRecord" value="{!row.RecordId}" variant="label-hidden" onchange="{!c.handleCheckBoxClick}" checked="{!row.ValueChecked}"/> 
+                                        </lightning:layoutItem>
 									</aura:renderIf>
-									<lightning:layoutItem>
+									<lightning:layoutItem class="slds-truncate">
 										<aura:renderIf isTrue="{!(field.FieldType == 'BOOLEAN')}">
 											<lightning:input type="checkbox" disabled="true" label=""  value="{!field.Value}" variant="label-hidden"/>
 										</aura:renderIf>
@@ -64,13 +117,81 @@
 						</aura:iteration>
 					</tr>
 				</aura:iteration>
+                <aura:set attribute="else">
+                    <aura:iteration items="{!v.TableRows}" var="row">
+					<tr>
+						<aura:iteration items="{!row.Fields}" var="field">
+							<td class="slds-truncate">
+								<lightning:layout >
+									<aura:renderIf isTrue="{!and(v.AllowSingleSelection, field.FirstField)}">
+										<lightning:layoutItem class="slds-m-right_x-small">
+											<lightning:input type="radio" label="" name="SelectedRecord" value="{!row.RecordId}" variant="label-hidden" onchange="{!c.handleRadioClick}"/>
+										</lightning:layoutItem>
+									</aura:renderIf> 
+                                    <aura:renderIf isTrue="{!and(v.AllowMultiSelection, field.FirstField)}">
+										<lightning:layoutItem class="slds-m-right_x-small">
+											<lightning:input type="checkbox" label="" name="SelectedRecord" value="{!row.RecordId}" variant="label-hidden" onchange="{!c.handleCheckBoxClick}"/>
+										</lightning:layoutItem>
+									</aura:renderIf>
+									<lightning:layoutItem class="slds-truncate">
+										<aura:renderIf isTrue="{!(field.FieldType == 'BOOLEAN')}">
+											<lightning:input type="checkbox" disabled="true" label=""  value="{!field.Value}" variant="label-hidden"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'CURRENCY')}">
+											<lightning:formattedNumber value="{!field.Value}" style="currency" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'PERCENT')}">
+											<lightning:formattedNumber value="{!field.Value}" style="percent" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'DOUBLE' || field.FieldType == 'LONG' || field.FieldType == 'INTEGER')}">
+											<lightning:formattedNumber value="{!field.Value}" style="decimal" maximumFractionDigits="2"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'PHONE')}">
+											<lightning:formattedPhone value="{!field.Value}"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'DATE' || field.FieldType == 'TIME' || field.FieldType == 'DATETIME' || field.FieldType == 'STRING' || field.FieldType == 'PICKLIST' || field.FieldType == 'MULTIPICKLIST' || field.FieldType == 'ADDRESS' || field.FieldType == 'ID' || field.FieldType == 'REFERENCE' || field.FieldType == 'EMAIL')}">
+											{!field.Value}
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'TEXTAREA')}">
+											<aura:unescapedHtml value="{!field.Value}"/>
+										</aura:renderIf>
+										<aura:renderIf isTrue="{!(field.FieldType == 'URL')}">
+											<lightning:formattedUrl value="{!field.Value}" />
+										</aura:renderIf>
+									</lightning:layoutItem>
+								</lightning:layout>
+							</td>
+						</aura:iteration>
+					</tr>
+				</aura:iteration>
+				</aura:set>
+                </aura:if>
 			</tbody>
 		</table>
+        <aura:if isTrue="{!v.Pagination}" >
+            <div class="slds-grid slds-gutters slds-p-top_medium">
+                <div class="slds-col">
+                    <aura:If isTrue="{!greaterthan(v.TotalSize,v.End)}">
+                        <p class="slds-p-left_large">{! 'Showing ' + (v.Start + 1) + '-' + (v.End) + ' out of ' + v.TotalSize}</p>
+                        <aura:set attribute="else">
+                            <p class="slds-p-left_large">{! 'Showing ' + (v.Start + 1) + '-' + (v.TotalSize) + ' out of ' + v.TotalSize}</p>
+                        </aura:set>
+                    </aura:If>
+                </div>
+                <div class="slds-col">
+                    <lightning:buttonGroup class="slds-p-left_small">
+                        <lightning:button label="&lt;&lt; First" disabled="{!v.Start == 0}"  onclick="{!c.first}"/>
+                        <lightning:button label="&lt; Previous" disabled="{!v.Start == 0}"  onclick="{!c.previous}"/>
+                        <lightning:button label="Next &gt;" disabled="{!v.End >= v.TotalSize}" onclick="{!c.next}"/>
+                        <lightning:button label="Last &gt;&gt;" disabled="{!v.End >= v.TotalSize}" onclick="{!c.last}"/>
+                    </lightning:buttonGroup>
+                </div>
+             </div>
+        </aura:if>
 		<aura:set attribute="else">
 			<div class="slds-align_absolute-center">
 				{!v.NoRecordsMessage}
 			</div>
 		</aura:set>
 	</aura:renderIf>
-	
 </aura:component>
