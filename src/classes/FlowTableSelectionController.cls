@@ -1,12 +1,16 @@
-public class FlowTableSelectionController  { 
+public with sharing class FlowTableSelectionController  { 
 	@AuraEnabled
     public static ApexMethodResult getRecordsToDisplayInTable(String sobject_name, String field_set_name, String where_clause){
         ApexMethodResult apex_method_result = new ApexMethodResult();
+        SObjectAccessDecision readable_record_list; 
         try {
 			Schema.FieldSet field_set = getFieldSetForObject(sobject_name, field_set_name);
 			apex_method_result.setFieldLabels(field_set);
 			String query = getQueryForObjectFieldSetAndWhereClause(sobject_name, field_set, where_clause);
-			List<sObject> table_records = Database.query(query);
+            if (userHasObjectAccess(sobject_name)) {
+                readable_record_list = Security.stripInaccessible(AccessType.READABLE,Database.query(query));
+            }
+            List<sObject> table_records = readable_record_list.getRecords();
 			for(sObject table_record : table_records){
 				TableRow table_row = new TableRow(table_record, field_set);
 				apex_method_result.TableRows.add(table_row);
@@ -41,6 +45,15 @@ public class FlowTableSelectionController  {
 		}
 		return query;
 	}
+    
+    private static Boolean userHasObjectAccess(String sobject_name) {
+        String[] current_object = new String[]{sobject_name};
+        if (Schema.describeSObjects(current_object)[0].isAccessible()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 	@TestVisible
     private class ApexMethodResult {
