@@ -106,7 +106,7 @@
 											{!field.Value}
 										</aura:renderIf>
 										<aura:renderIf isTrue="{!(field.FieldType == 'TEXTAREA')}">
-											<aura:unescapedHtml value="{!field.Value}"/>
+											{!field.Value}
 										</aura:renderIf>
 										<aura:renderIf isTrue="{!(field.FieldType == 'URL')}">
 											<lightning:formattedUrl value="{!field.Value}" />
